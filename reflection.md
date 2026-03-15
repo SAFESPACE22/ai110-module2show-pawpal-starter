@@ -2,10 +2,20 @@
 
 ## 1. System Design
 
+**Core Actions:**
+1. Represent pet care tasks (description, duration, priority).
+2. Represent the pet and the owner (basic info and preferences).
+3. Build a plan/schedule for a day that chooses and orders tasks based on constraints.
+
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+My initial system design uses four main classes:
+- **`Task`**: Represents individual activities with metadata (duration, priority).
+- **`Pet`**: Groups tasks and stores basic pet info (name, species).
+- **`Owner`**: Acts as a container for multiple pets.
+- **`Scheduler`**: Contains the logic to sort and filter tasks based on the owner's available time.
+
+The relationships are hierarchical: Owners have Pets, and Pets have Tasks. The Scheduler interacts with the Owner to pull all necessary data.
 
 **b. Design changes**
 
@@ -23,8 +33,8 @@
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+- **Simple Conflict Detection**: My scheduler currently detects conflicts based on exact start times (e.g., two tasks at 08:00) rather than checking for overlapping durations.
+- **Why it's reasonable**: For a pet care app where tasks are often discrete and flexible, alerting the owner of a simultaneous start time is often enough to remind them to stagger the activities. A full-fledged overlap detection algorithm would add significant complexity that may be overkill for a simple daily planning tool.
 
 ---
 

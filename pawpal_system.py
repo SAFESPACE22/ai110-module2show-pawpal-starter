@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
-from typing import List
-
+from typing import List, Optional
+from datetime import datetime, timedelta
 @dataclass
 class Task:
     """Represents a single care activity with a description, duration, and priority."""
@@ -8,10 +8,21 @@ class Task:
     duration_minutes: int
     priority: str
     completed: bool = False
+    due_time: Optional[str] = None  # Format: "HH:MM"
+    frequency: Optional[str] = None  # e.g., "daily", "weekly"
 
-    def mark_complete(self):
-        """Marks the task as completed."""
+    def mark_complete(self) -> Optional['Task']:
+        """Marks the task as completed. Returns a new Task if recurring."""
         self.completed = True
+        if self.frequency == "daily":
+            return Task(
+                description=self.description,
+                duration_minutes=self.duration_minutes,
+                priority=self.priority,
+                due_time=self.due_time,
+                frequency=self.frequency
+            )
+        return None
 
 @dataclass
 class Pet:
@@ -50,9 +61,42 @@ class Scheduler:
     def generate_schedule(self) -> List[str]:
         """Retrieves and organizes tasks across all pets into a readable list."""
         all_tasks = self.owner.get_all_tasks()
-        # For now, we just return them as a list of strings
+        
+        # Phase 4: Sorting by time
+        def get_time_key(task: Task):
+            if task.due_time:
+                try:
+                    return datetime.strptime(task.due_time, "%H:%M")
+                except ValueError:
+                    return datetime.max
+            return datetime.max
+            
+        pending_tasks = [t for t in all_tasks if not t.completed]
+        sorted_tasks = sorted(pending_tasks, key=get_time_key)
+        
+        # Phase 4: Conflict detection
+        conflicts = []
+        time_slots = {}
+        for task in sorted_tasks:
+            if task.due_time:
+                if task.due_time in time_slots:
+                    conflicts.append(f"Conflict: '{task.description}' overlaps with '{time_slots[task.due_time].description}' at {task.due_time}")
+                else:
+                    time_slots[task.due_time] = task
+
         schedule = []
-        for task in all_tasks:
-            status = "[x]" if task.completed else "[ ]"
-            schedule.append(f"{status} {task.description} ({task.duration_minutes} min, {task.priority} priority)")
+        if conflicts:
+            schedule.append("⚠️ WARNING: Time conflicts detected!")
+            for conflict in conflicts:
+                schedule.append(f"  - {conflict}")
+            schedule.append("")
+
+        for task in sorted_tasks:
+            status = "[ ]"
+            time_str = f" @ {task.due_time}" if task.due_time else ""
+            schedule.append(f"{status} {task.description}{time_str} ({task.duration_minutes} min, {task.priority} priority)")
+            
+        if not schedule:
+            return ["No pending tasks scheduled!"]
+            
         return schedule
