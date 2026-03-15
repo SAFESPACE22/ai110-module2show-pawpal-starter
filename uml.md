@@ -18,7 +18,9 @@ classDiagram
         +int duration_minutes
         +string priority
         +bool completed
-        +mark_complete()
+        +string due_time
+        +string frequency
+        +mark_complete() Task
     }
     class Scheduler {
         +Owner owner
